@@ -1,15 +1,18 @@
 
 public class ArtificialIntelligence extends Player {
 	
-	ArtificialIntelligence(String name){
-		super(name);
+	ArtificialIntelligence(String name, Game game){
+		super(name, game);
 	}
 	
-	public void play(){
+	public void play(String move){
 		
 	}
 	
-	public void selectStrategy(){
-		
+	public void chooseAction(boolean bool){
+		String move = null;
+		//search algorithm		
+		play(move);
 	}
+	
 }
