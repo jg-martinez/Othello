@@ -34,7 +34,7 @@ public class Board implements Runnable, Observer {
 				if (command != null ) {
 					command = command.toLowerCase();				
 					if (command.matches("[a-h][1-8]")) {
-						if(checkMove(command)){
+						if(this.game.getActualPlayer().checkPossibleMove(command)){
 							this.game.getActualPlayer().chooseAction(false, this.game);
 							int posX = Character.getNumericValue(command.charAt(0)) - 10;
 							int posY = Character.getNumericValue(command.charAt(1)) - 1;
@@ -60,14 +60,6 @@ public class Board implements Runnable, Observer {
 		
 	}
 	
-	public boolean checkMove(String move){		
-		if(game.getActualPlayer().checkPossibleMove(move) == true){
-			return true;
-		} else { 
-			return false;
-		}		
-	}
-	
 	public void help() {
 		System.out.println("Use : \n" + HELP + " to get the command list \n"
 				+ PRINT + " : to print the board \n"
@@ -75,7 +67,7 @@ public class Board implements Runnable, Observer {
 				+ QUIT + " : quit the game.");
 	}
 	
-	private String readCommand() {
+	public String readCommand() {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String resultat = null;
 		try {

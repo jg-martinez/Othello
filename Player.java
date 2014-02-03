@@ -2,11 +2,11 @@ public abstract class Player {
 	private String name;
 	private int score;
 	private int color;
-	private int[][] possibleMove;
-	private static int MAX_ITERATION = 3;
-	
-	public static char EMPTYBOX = ' ';
+	private int[][] possibleMove;	
 	private int[] posXY;
+	
+	private static int MAX_ITERATION = 3;	
+	public static char EMPTYBOX = ' ';
 	
 	
 	public Player(String arg0){
@@ -17,34 +17,21 @@ public abstract class Player {
 		this.posXY = new int[2];
 	}
 	
+	public abstract void chooseAction(boolean bool, Game game);
+	
 	public void play(int posX, int posY, Game game){
 		game.setReversi(posX,posY, this.color);
 	}
 	
-	public int[] getposXY(){
-		return this.posXY;
-	}
 	
-	public void setPosXY(int[] posXY){
-		this.posXY[0] = posXY[0];
-		this.posXY[1] = posXY[1];
-	}
 	
 	public void suggestStrategy(Game game){
 		createPossibleMove(game);
 		this.setPosXY(minMax(game));
 		this.getPossibleMove()[this.getposXY()[1]][this.getposXY()[0]] = 'B';
-	}	
+	}		
+		
 	
-	public String getLastMove(){
-		String string = new String();
-		string = Character.toString((char)(this.posXY[1]+97));
-		string += Character.toString((char)(this.posXY[0]+49));
-		return string;
-		
-	}
-		
-	public abstract void chooseAction(boolean bool, Game game);
 	
 	public void createPossibleMove(Game game){
 		for(int i = 0; i < 8; i++){
@@ -224,47 +211,14 @@ public abstract class Player {
 		return 0;
 	}
 	
-	public int getScore(){
-		return this.score;
-	}
-	
-	public int getColor(){
-		return this.color;
-	}
-
-	public void setColor(int arg0){
-		this.color = arg0;
-	}
-	
-	public String getName(){
-		return this.name;
-	}
-	
-	public int[][] getPossibleMove(){
-		return this.possibleMove;
-	}
-	
 	public boolean checkPossibleMove(String move){
 		int posX = Character.getNumericValue(move.charAt(0)) - 10;
-		int posY = Character.getNumericValue(move.charAt(1)) - 1;		
-		
+		int posY = Character.getNumericValue(move.charAt(1)) - 1;			
 		if(possibleMove[posY][posX] != 0){
 			return true;
 		} else {
 			return false;
-		}		
-		
-	}
-	
-	public void updateScore(Game game){
-		this.score = 0;
-		for(int i = 0; i < 8; i++){
-			for(int j = 0; j < 8; j++){
-				if(game.getReversi()[i][j] == this.color){
-					this.score++;
-				}
-			}
-		}
+		}			
 	}
 	
 	public boolean hasNoMoreMove(){
@@ -279,11 +233,11 @@ public abstract class Player {
 	
 	public int[] minMax(Game game){
 		int[] posXY = new int[2];
-		posXY = maxMove(game, 0, 0, 0);		
+		posXY = maxMove(game, 0);		
 		return posXY;
 	}
 	
-	public int[] maxMove(Game game, int depth_first, int posX, int posY){
+	public int[] maxMove(Game game, int depth_first){
 		int[] posXY = new int[2];
 		if(game.endGame() || depth_first >= MAX_ITERATION){
 			return posXY;
@@ -314,7 +268,7 @@ public abstract class Player {
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				if(this.getPossibleMove()[j][i] != 0){//if it's a possible move
-					posXY = maxMove(gamebis, depth_first, i, j);
+					posXY = maxMove(gamebis, depth_first);
 					if(game.getReversi()[posXY[1]][posXY[0]] > best_move){						
 						posXY[0] = i;
 						posXY[1] = j;						
@@ -324,6 +278,56 @@ public abstract class Player {
 		}
 		return posXY;		
 	}
+	
+	public String getLastMove(){
+		String string = new String();
+		string = Character.toString((char)(this.posXY[1]+97));
+		string += Character.toString((char)(this.posXY[0]+49));
+		return string;		
+	}
+	
+	
+	public int getScore(){
+		return this.score;
+	}
+	
+	public int getColor(){
+		return this.color;
+	}
+	
+	public int[] getposXY(){
+		return this.posXY;
+	}	
+	
+	public String getName(){
+		return this.name;
+	}
+	
+	public int[][] getPossibleMove(){
+		return this.possibleMove;
+	}
+	
+	public void setPosXY(int[] posXY){
+		this.posXY[0] = posXY[0];
+		this.posXY[1] = posXY[1];
+	}
+
+	public void setColor(int arg0){
+		this.color = arg0;
+	}
+	
+	
+	
+	public void setScore(Game game){
+		this.score = 0;
+		for(int i = 0; i < 8; i++){
+			for(int j = 0; j < 8; j++){
+				if(game.getReversi()[i][j] == this.color){
+					this.score++;
+				}
+			}
+		}
+	}	
 	
 	public String toString(){
 		String string = new String();
