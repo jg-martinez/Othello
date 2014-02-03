@@ -35,8 +35,10 @@ public class Board implements Runnable, Observer {
 					command = command.toLowerCase();				
 					if (command.matches("[a-h][1-8]")) {
 						if(checkMove(command)){
-							this.game.getActualPlayer().chooseAction(false);
-							this.game.getActualPlayer().play(command);
+							this.game.getActualPlayer().chooseAction(false, this.game);
+							int posX = Character.getNumericValue(command.charAt(0)) - 10;
+							int posY = Character.getNumericValue(command.charAt(1)) - 1;
+							this.game.getActualPlayer().play(posX,posY, this.game);
 						} else {
 							this.game.toString();
 							System.out.println("This move is not allowed. Choose another one.");
@@ -85,10 +87,20 @@ public class Board implements Runnable, Observer {
 	}
 	
 	public void update(Observable o, Object arg) {
-		if(arg.equals("newRound")){
+		if(arg.equals("playerChange")){			
 			System.out.println(this.game.toString());
 			System.out.println("It is " + this.game.getActualPlayer().getName() + "'s turn (Player " + Character.toString((char)this.game.getActualPlayer().getColor()) +").");
-			System.out.println(PROMPT);
+			System.out.print(PROMPT);
+		} else if(arg.equals("BestMoveSelected")){
+			System.out.println(this.game.toString());
+			System.out.println("It is " + this.game.getActualPlayer().getName() + "'s turn (Player " + Character.toString((char)this.game.getActualPlayer().getColor()) +").");
+			System.out.print(PROMPT);
+		} else if(arg.equals("AIsTurn")){
+			System.out.println(this.game.getActualPlayer().getName() + " will play...");
+		} else if(arg.equals("AIhasPlayed")){
+			System.out.println(this.game.getActualPlayer().getName() + " has played " + this.game.getActualPlayer().getLastMove());
+		} else if(arg.equals("NoMoreMove")){
+			System.out.println(this.game.getActualPlayer().getName() + " can't play anymore !");
 		}
 	}
 

@@ -2,12 +2,12 @@
 
 public class HumanPlayer extends Player {
 	
-	HumanPlayer(String name, Game game){
-		super(name, game);
+	HumanPlayer(String name){
+		super(name);
 	}
 	
-	public synchronized void chooseAction(boolean bool){
-		suggestStrategy();		
+	public synchronized void chooseAction(boolean bool, Game game){
+		suggestStrategy(game);		
 		while (bool) {
 			try {
 				wait();
@@ -19,10 +19,5 @@ public class HumanPlayer extends Player {
 		notifyAll();
 
 	}	
-	
-	public void suggestStrategy(){
-		//search algorithm
-	}
-	
 	
 }

@@ -10,20 +10,41 @@ public class Game extends Observable {
 	private int pointer;
 	private int[][] reversi;
 	private int round;
+	private Scanner sc;
+	
+	public static char EMPTYBOX = ' ';
 	
 	public static void main(String[] args) {
 		Game game = new Game();
 		Board boardgame = new Board(game);
 		boardgame.help();
-		game.round = 1;
+		game.getPlayers().get(0).createPossibleMove(game);
+		game.getPlayers().get(1).createPossibleMove(game);
+		
 		while(!game.endGame()){				
-			game.setChanged();
-			game.notifyObservers("newRound");			
-			game.getActualPlayer().chooseAction(true);
-			game.pointer = (game.pointer + 1) % 2;
-			game.round++;
+			game.getActualPlayer().createPossibleMove(game);		
+			if(game.getActualPlayer().hasNoMoreMove()){ //we change to next player if player has no more move
+				game.setChanged();
+				game.notifyObservers("NoMoreMove");
+				game.pointer = (game.pointer + 1) % 2;
+			} else {
+				if(game.getActualPlayer() instanceof HumanPlayer){
+					game.getActualPlayer().suggestStrategy(game);
+					game.setChanged();
+					game.notifyObservers("BestMoveSelected");
+				} else {
+					game.setChanged();
+					game.notifyObservers("AIsTurn");
+					game.setChanged();
+					game.notifyObservers("AIhasPlayed");	
+				}
+				game.getActualPlayer().chooseAction(true, game);				
+				game.pointer = (game.pointer + 1) % 2;
+			}			
+			
 		}		
 		game.winnerIs();
+		game.sc.close();
 	}
 	
 	public int[][] getReversi(){
@@ -40,7 +61,7 @@ public class Game extends Observable {
 				}
 			}
 		}
-		for(int i = posX; i > 0; i--){ //to the left
+		for(int i = posX; i >= 0; i--){ //to the left
 			if(reversi[posY][i] == color){
 				for(int k = posX; k >= i; k--){
 					reversi[posY][k] = color;
@@ -54,57 +75,82 @@ public class Game extends Observable {
 				}
 			}
 		}
-		for(int j = posY; j > 0; j--){ //to the top
+		for(int j = posY; j >= 0; j--){ //to the top
 			if(reversi[j][posX] == color){
 				for(int k = posY; k >= j; k--){
 					reversi[k][posX] = color;
 				}
 			}
 		}
-		for(int i = posX; i < 8 ; i++){ //diagonals
-			if(this.reversi[7-i][i] == color){ //diagonal posX->top left
-				for(int k = posX; k <= i; k++){
-					reversi[7-k][k] = color;
+		int i = 0;
+		int j = 0;
+		while(posX + i < 8 && posY + j < 8){ //bottom right
+			if(this.reversi[posY+j][posX+i] == color){
+				int k = 0;
+				int l = 0;
+				while(k <= i && l <= j){
+					this.reversi[posY + l][posX + k] = color;
+					k++;
+					l++;
 				}
 			}
-			if(this.reversi[i][7-i] == color){ //diagonal posX->bottom right
-				for(int k = posY; k <= i; k++){
-					reversi[k][7-k] = color;
-				}
-			}
+			i++;
+			j++;
 		}
-		for(int i = posX; i > 0; i--){ //diagonals
-			if(this.reversi[7-i][i] == 0){ //diagonal posX->top right
-				for(int k = posX; k >= i; k++){
-					reversi[7-k][k] = color;
+		i = 0;
+		j = 0;
+		while(posX + i < 8 && posY - j >= 0){ //top right
+			if(this.reversi[posY-j][posX+i] == color){
+				int k = 0;
+				int l = 0;
+				while(k <= i && l <= j){
+					this.reversi[posY - l][posX + k] = color;
+					k++;
+					l++;
 				}
 			}
-			if(this.reversi[i][7-i] == 0){ //diagonal posX->bottom left
-				for(int k = posX; k >= i; k++){
-					reversi[k][7-k] = color;
-				}
-			}
+			i++;
+			j++;
 		}
-		updateScore();
-	}
-	
-	public void updateScore(){
-		for(int i = 0; i < 8; i++){
-			for(int j = 0; j < 8; j++){
-				if(reversi[i][j] == players.get(0).getColor()){
-					players.get(0).incrementeScore();					
-				} else if(reversi[i][j] == players.get(1).getColor()){
-					players.get(1).incrementeScore();
+		i = 0;
+		j = 0;
+		while(posX - i >= 0 && posY - j >= 0){ //top left
+			if(this.reversi[posY-j][posX-i] == color){
+				int k = 0;
+				int l = 0;
+				while(k <= i && l <= j){
+					this.reversi[posY - l][posX - k] = color;
+					k++;
+					l++;
 				}
 			}
+			i++;
+			j++;
 		}
+		i = 0;
+		j = 0;
+		while(posX - i >= 0 && posY + j < 8){ //bottom left
+			if(this.reversi[posY+j][posX-i] == color){
+				int k = 0;
+				int l = 0;
+				while(k <= i && l <= j){
+					this.reversi[posY + l][posX - k] = color;
+					k++;
+					l++;
+				}
+			}
+			i++;
+			j++;
+		}
+		this.players.get(0).updateScore(this);
+		this.players.get(1).updateScore(this);
 	}
 	
 	public Game(){
 		this.reversi = new int[8][8];
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
-				this.reversi[i][j] = ' ';
+				this.reversi[i][j] = EMPTYBOX;
 			}
 		}
 		this.reversi[3][3] = 'x';
@@ -112,14 +158,28 @@ public class Game extends Observable {
 		this.reversi[3][4] = 'o';
 		this.reversi[4][3] = 'o';
 		
+		sc = new Scanner(System.in);
+		
 		this.players = new ArrayList<Player>();
-		this.createPlayers();		
+		this.createPlayers();	
+		this.players.get(0).updateScore(this);
+		this.players.get(1).updateScore(this);
+	}
+	
+	public Game(Game gameToCpy){
+		this.reversi = new int[8][8];
+		for(int i = 0; i < 8; i++){
+			for(int j = 0; j < 8; j++){
+				this.reversi[i][j] = gameToCpy.reversi[i][j];
+			}
+		}
+		
+		this.players = new ArrayList<Player>(gameToCpy.players);	
 	}
 	
 	public ArrayList<Player> getPlayers(){
 		return this.players;
 	}
-	
 	
 	public int getPointer(){
 		return this.pointer;
@@ -136,7 +196,7 @@ public class Game extends Observable {
 	public void createPlayers(){
 		System.out.println("Indicate the number of human player :");
 		System.out.print(">");
-		Scanner sc = new Scanner(System.in);
+		
 		int nbr=0;
 		do {			
 			try {
@@ -155,13 +215,13 @@ public class Game extends Observable {
 		sc.nextLine(); //Empty the buffer before reading another line
 		for(int i=0; i < 2 - nbr; i++){ //We create the AI
 			name = "AI" + (i+1);
-			players.add(new ArtificialIntelligence(name, this));
+			players.add(new ArtificialIntelligence(name));
 		}
 		for(int i=0; i < nbr; i++){ //We create the human players
 				System.out.println("Choose the name of the human player " + (i+1) + " : ");
 				System.out.print(">");
 				name = sc.nextLine();	
-				players.add(new HumanPlayer(name, this));			
+				players.add(new HumanPlayer(name));			
 		}
 		Collections.shuffle(players); //Randomize player1 and player2
 		players.get(0).setColor('x');
@@ -169,7 +229,7 @@ public class Game extends Observable {
 	}		
 	
 	public boolean endGame(){
-		boolean hasEmpty = false, hasX = false, hasO = false;
+		boolean hasEmpty = false, hasX = false, hasO = false, noMoreMoveLeft = false;
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				if(this.reversi[i][j] == ' '){
@@ -183,7 +243,10 @@ public class Game extends Observable {
 				}				
 			}
 		}
-		if(hasEmpty == false || hasX == false || hasO == false){
+		if(this.players.get(0).hasNoMoreMove() && this.players.get(1).hasNoMoreMove()){
+			noMoreMoveLeft = true;
+		}
+		if(hasEmpty == false || hasX == false || hasO == false || noMoreMoveLeft == true){
 			return true;
 		} else {
 			return false;
@@ -198,10 +261,10 @@ public class Game extends Observable {
 		} else {
 			System.out.println("Draw.");
 		}
+		System.out.println(this.toString());
 		System.out.println(this.players.get(0).getName() + " : " + this.players.get(0).getScore() + "\t" + this.players.get(1).getName() + " : " + this.players.get(1).getScore());
 	}
-	
-	
+		
 	public String toString(){
 		String string = new String();
 		string = this.players.get(0).toString() + this.players.get(1).toString(); 	
@@ -209,7 +272,20 @@ public class Game extends Observable {
 		string += "\n\t -----------------\n\t1|";
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
-				string += Character.toString((char)this.reversi[i][j]) + "|";
+				if(this.reversi[i][j] == EMPTYBOX){
+					if(this.getActualPlayer().getPossibleMove()[i][j] != 0){
+						if(this.getActualPlayer().getPossibleMove()[i][j] == 'B'){
+							string += Character.toString((char)this.getActualPlayer().getPossibleMove()[i][j]) + "|";
+						} else {
+							string += this.getActualPlayer().getPossibleMove()[i][j] + "|";
+						}
+						
+					} else {
+						string += Character.toString((char)this.reversi[i][j]) + "|";
+					}
+				} else {
+					string += Character.toString((char)this.reversi[i][j]) + "|";
+				}				
 			}
 			if(i != 7) string += "\n\t -----------------\n\t" + (i+2) + "|";			
 		}		
