@@ -9,6 +9,7 @@ public class Game extends Observable {
 	private ArrayList<Player> players;
 	private int pointer;
 	private int[][] reversi;
+	private int timeLimit;
 
 	private Scanner sc;
 	
@@ -74,7 +75,7 @@ public class Game extends Observable {
 				this.reversi[i][j] = gameToCpy.reversi[i][j];
 			}
 		}
-		
+		this.timeLimit = gameToCpy.timeLimit;
 		this.players = new ArrayList<Player>(gameToCpy.players);	
 	}
 	
@@ -111,6 +112,12 @@ public class Game extends Observable {
 		Collections.shuffle(players); //Randomize player1 and player2
 		players.get(0).setColor('x');
 		players.get(1).setColor('o');
+
+		System.out.println("Indicate the time limit (in second) :");
+		System.out.print(">");
+		this.timeLimit = sc.nextInt(); 
+		
+		
 	}		
 	
 	public boolean endGame(){
@@ -154,7 +161,9 @@ public class Game extends Observable {
 		return this.reversi;
 	}
 	
-	
+	public int getTimeLimit(){
+		return this.timeLimit;
+	}
 	
 	
 	

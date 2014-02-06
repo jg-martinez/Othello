@@ -5,7 +5,6 @@ public abstract class Player {
 	private int[][] possibleMove;	
 	private int[] posXY;
 	
-	private static int MAX_ITERATION = 3;	
 	public static char EMPTYBOX = ' ';
 	
 	
@@ -233,13 +232,14 @@ public abstract class Player {
 	
 	public int[] minMax(Game game){
 		int[] posXY = new int[2];
-		posXY = maxMove(game, 0);		
+		long T = System.currentTimeMillis();
+		posXY = maxMove(game, T);		
 		return posXY;
 	}
 	
-	public int[] maxMove(Game game, int depth_first){
+	public int[] maxMove(Game game, long T){
 		int[] posXY = new int[2];
-		if(game.endGame() || depth_first >= MAX_ITERATION){
+		if(game.endGame() || (int)(System.currentTimeMillis() - T) > game.getTimeLimit()){
 			return posXY;
 		} else {
 			int best_move = 0;
@@ -248,7 +248,7 @@ public abstract class Player {
 			for(int i = 0; i < 8; i++){
 				for(int j = 0; j < 8; j++){
 					if(this.getPossibleMove()[j][i] != 0){//if it's a possible move
-						posXY = minMove(gamebis, depth_first+1);
+						posXY = minMove(gamebis, T);
 						if(game.getReversi()[posXY[1]][posXY[0]] > best_move){						
 							posXY[0] = i;
 							posXY[1] = j;						
@@ -260,7 +260,7 @@ public abstract class Player {
 		}		
 	}
 	
-	public int[] minMove(Game game, int depth_first){
+	public int[] minMove(Game game, long T){
 		int[] posXY = new int[2];
 		int best_move = 0;
 		Game gamebis = new Game(game);
@@ -268,7 +268,7 @@ public abstract class Player {
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				if(this.getPossibleMove()[j][i] != 0){//if it's a possible move
-					posXY = maxMove(gamebis, depth_first);
+					posXY = maxMove(gamebis, T);
 					if(game.getReversi()[posXY[1]][posXY[0]] > best_move){						
 						posXY[0] = i;
 						posXY[1] = j;						
