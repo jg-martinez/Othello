@@ -4,46 +4,80 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.Observable;
 
+/**
+ * 
+ * Definition of the Othello game.
+ * 
+ *
+ */
 public class Game extends Observable {
-	
+	/**
+	 * Contain all the players
+	 */
 	private ArrayList<Player> players;
+	
+	/**
+	 * Point to the current player
+	 */
 	private int pointer;
+	
+	/**
+	 * BoardGame were we play
+	 * reversi[Y][X] where Y is the [1-8] vertical axis, and X is the [a-h] horizontal axis
+	 */
 	private int[][] reversi;
+	
+	/**
+	 * Time allocated to the minMax algorithm.
+	 */
 	private int timeLimit;
-
+	
+	/**
+	 * Number of turns played / current turn
+	 */
+	private int turn;
+	
+	/**
+	 * Entry buffer
+	 */
 	private Scanner sc;
 	
+	/**
+	 * Constant that define an empty box
+	 */
 	public static char EMPTYBOX = ' ';
 	
 	public static void main(String[] args) {
 		Game game = new Game();
 		Board boardgame = new Board(game);
-		boardgame.help();
-		game.getPlayers().get(0).createPossibleMove(game);
-		game.getPlayers().get(1).createPossibleMove(game);
+		boardgame.help(); //print the help for the user
+		game.getPlayers().get(0).createPossibleMove(game); //initialize the possible move for player 0
+		game.getPlayers().get(1).createPossibleMove(game); //initialize the possible move for player 1
 		
-		while(!game.endGame()){				
-			game.getActualPlayer().createPossibleMove(game);		
-			if(game.getActualPlayer().hasNoMoreMove()){ //we change to next player if player has no more move
-				game.setChanged();
-				game.notifyObservers("NoMoreMove");
-				game.pointer = (game.pointer + 1) % 2;
+		while(!game.endGame()){	//we check the end of the game			
+			game.getCurrentPlayer().createPossibleMove(game); //we create the possible move for the current game	
+			if(game.getCurrentPlayer().hasNoMoreMove()){ //we change to next player if the current player has no more move
+				game.setChanged(); //Observable method
+				game.notifyObservers("NoMoreMove"); //Observable method
+				game.nextPlayer(); 
 			} else {
-				if(game.getActualPlayer() instanceof HumanPlayer){
-					game.getActualPlayer().suggestStrategy(game);
+				if(game.getCurrentPlayer() instanceof HumanPlayer){ 
+					game.getCurrentPlayer().suggestStrategy(game); 
+					game.updateScore();
 					game.setChanged();
 					game.notifyObservers("BestMoveSelected");
+					game.getCurrentPlayer().chooseAction(true, game); //this boolean value will pause the tread if it's a human player
 				} else {
 					game.setChanged();
 					game.notifyObservers("AIsTurn");
+					game.getCurrentPlayer().chooseAction(true, game);
 					game.setChanged();
 					game.notifyObservers("AIhasPlayed");	
 				}
-				game.getActualPlayer().chooseAction(true, game);				
-				game.pointer = (game.pointer + 1) % 2;
+				game.nextPlayer();
 			}			
 			
-		}		
+		}	
 		game.winnerIs();
 		game.sc.close();
 	}
@@ -61,13 +95,15 @@ public class Game extends Observable {
 		this.reversi[4][3] = 'o';
 		
 		sc = new Scanner(System.in);
-		
+		this.turn = 1;
 		this.players = new ArrayList<Player>();
 		this.createPlayers();	
-		this.players.get(0).setScore(this);
-		this.players.get(1).setScore(this);
 	}
 	
+	/**
+	 * duplicate the gameToCpy variable in a new variable
+	 * @param gameToCpy
+	 */
 	public Game(Game gameToCpy){
 		this.reversi = new int[8][8];
 		for(int i = 0; i < 8; i++){
@@ -76,7 +112,18 @@ public class Game extends Observable {
 			}
 		}
 		this.timeLimit = gameToCpy.timeLimit;
+		this.turn = gameToCpy.turn;
 		this.players = new ArrayList<Player>(gameToCpy.players);	
+	}
+	
+	/**
+	 * Change the current player and manage the turn variable
+	 */
+	public void nextPlayer(){
+		if(this.getPointer() == 1) {
+			this.turn++;
+		}
+		this.pointer = (this.pointer + 1) % 2;
 	}
 	
 	public void createPlayers(){
@@ -115,27 +162,29 @@ public class Game extends Observable {
 
 		System.out.println("Indicate the time limit (in second) :");
 		System.out.print(">");
-		this.timeLimit = sc.nextInt(); 
-		
-		
+		this.timeLimit = sc.nextInt(); 		
 	}		
 	
+	/**
+	 * 
+	 * @return true if the game is over, false else.
+	 */
 	public boolean endGame(){
 		boolean hasEmpty = false, hasX = false, hasO = false, noMoreMoveLeft = false;
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				if(this.reversi[i][j] == ' '){
-					hasEmpty = true; //if a case is empty, we can continue the game
+					hasEmpty = true; //if a box is empty, we can continue the game
 				}
 				if(this.reversi[i][j] == 'x'){
-					hasX = true; //if a case is empty, we can continue the game
+					hasX = true; //the x player still has some pieces
 				}
 				if(this.reversi[i][j] == 'o'){
-					hasO = true; //if a case is empty, we can continue the game
+					hasO = true; //the o player still has some pieces
 				}				
 			}
 		}
-		if(this.players.get(0).hasNoMoreMove() && this.players.get(1).hasNoMoreMove()){
+		if(this.players.get(0).hasNoMoreMove() && this.players.get(1).hasNoMoreMove()){ //both player can't move anymore
 			noMoreMoveLeft = true;
 		}
 		if(hasEmpty == false || hasX == false || hasO == false || noMoreMoveLeft == true){
@@ -145,7 +194,11 @@ public class Game extends Observable {
 		}
 	}
 	
+	/**
+	 * Announce the winner of the game
+	 */
 	public void winnerIs(){
+		this.updateScore();
 		if(this.players.get(0).getScore() > this.players.get(1).getScore()){
 			System.out.println(this.players.get(0).getName() + "wins !");
 		} else if(this.players.get(0).getScore() < this.players.get(1).getScore()){
@@ -163,9 +216,7 @@ public class Game extends Observable {
 	
 	public int getTimeLimit(){
 		return this.timeLimit;
-	}
-	
-	
+	}	
 	
 	public ArrayList<Player> getPlayers(){
 		return this.players;
@@ -175,8 +226,17 @@ public class Game extends Observable {
 		return this.pointer;
 	}
 	
-	public Player getActualPlayer(){
+	public int getTurn(){
+		return this.turn;
+	}
+	
+	public Player getCurrentPlayer(){
 		return this.players.get(this.pointer);
+	}
+	
+	public void updateScore(){
+		this.getPlayers().get(0).setScore(this);
+		this.getPlayers().get(1).setScore(this);
 	}
 	
 	public void setReversi(int posX, int posY, int color){
@@ -187,6 +247,8 @@ public class Game extends Observable {
 				for(int k = posX; k <= i; k++){
 					reversi[posY][k] = color;
 				}
+			} else if(reversi[posY][i] == EMPTYBOX){
+				break;
 			}
 		}
 		for(int i = posX; i >= 0; i--){ //to the left
@@ -194,6 +256,8 @@ public class Game extends Observable {
 				for(int k = posX; k >= i; k--){
 					reversi[posY][k] = color;
 				}
+			} else if(reversi[posY][i] == EMPTYBOX){
+				break;
 			}
 		}
 		for(int j = posY; j < 8; j++){ //to the bottom
@@ -201,6 +265,8 @@ public class Game extends Observable {
 				for(int k = posY; k <= j; k++){
 					reversi[k][posX] = color;
 				}
+			} else if(reversi[j][posX] == EMPTYBOX){
+				break;
 			}
 		}
 		for(int j = posY; j >= 0; j--){ //to the top
@@ -208,6 +274,8 @@ public class Game extends Observable {
 				for(int k = posY; k >= j; k--){
 					reversi[k][posX] = color;
 				}
+			} else if(reversi[j][posX] == EMPTYBOX){
+				break;
 			}
 		}
 		int i = 0;
@@ -221,6 +289,8 @@ public class Game extends Observable {
 					k++;
 					l++;
 				}
+			} else if(this.reversi[posY+j][posX+i] == EMPTYBOX){
+				break;
 			}
 			i++;
 			j++;
@@ -236,6 +306,8 @@ public class Game extends Observable {
 					k++;
 					l++;
 				}
+			} else if(this.reversi[posY-j][posX+i] == EMPTYBOX){
+				break;
 			}
 			i++;
 			j++;
@@ -251,6 +323,8 @@ public class Game extends Observable {
 					k++;
 					l++;
 				}
+			} else if(this.reversi[posY-j][posX-i] == EMPTYBOX){
+				break;
 			}
 			i++;
 			j++;
@@ -266,15 +340,13 @@ public class Game extends Observable {
 					k++;
 					l++;
 				}
+			} else if(this.reversi[posY+j][posX-i] == EMPTYBOX){
+				break;
 			}
 			i++;
 			j++;
 		}
-		this.players.get(0).setScore(this);
-		this.players.get(1).setScore(this);
-	}
-	
-	
+	}	
 		
 	public String toString(){
 		String string = new String();
@@ -284,11 +356,11 @@ public class Game extends Observable {
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				if(this.reversi[i][j] == EMPTYBOX){
-					if(this.getActualPlayer().getPossibleMove()[i][j] != 0){
-						if(this.getActualPlayer().getPossibleMove()[i][j] == 'B'){
-							string += Character.toString((char)this.getActualPlayer().getPossibleMove()[i][j]) + "|";
+					if(this.getCurrentPlayer().getPossibleMove()[i][j] != 0){
+						if(this.getCurrentPlayer().getPossibleMove()[i][j] == 'B'){
+							string += Character.toString((char)this.getCurrentPlayer().getPossibleMove()[i][j]) + "|";
 						} else {
-							string += this.getActualPlayer().getPossibleMove()[i][j] + "|";
+							string += this.getCurrentPlayer().getPossibleMove()[i][j] + "|";
 						}
 						
 					} else {
@@ -303,5 +375,4 @@ public class Game extends Observable {
 		string += "\n\t -a-b-c-d-e-f-g-h-\n\t";
 		return string;
 	}
-
 }

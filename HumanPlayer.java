@@ -6,8 +6,7 @@ public class HumanPlayer extends Player {
 		super(name);
 	}
 	
-	public synchronized void chooseAction(boolean bool, Game game){
-		suggestStrategy(game);		
+	public synchronized void chooseAction(boolean bool, Game game){	
 		while (bool) {
 			try {
 				wait();

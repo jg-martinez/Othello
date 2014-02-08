@@ -7,6 +7,7 @@ public abstract class Player {
 	
 	public static char EMPTYBOX = ' ';
 	
+	public static int DEPTH_MAX = 10;
 	
 	public Player(String arg0){
 		this.name = arg0;
@@ -18,19 +19,12 @@ public abstract class Player {
 	
 	public abstract void chooseAction(boolean bool, Game game);
 	
-	public void play(int posX, int posY, Game game){
-		game.setReversi(posX,posY, this.color);
-	}
-	
-	
-	
+		
 	public void suggestStrategy(Game game){
-		createPossibleMove(game);
-		this.setPosXY(minMax(game));
+		this.createPossibleMove(game);
+		this.minMax(game);
 		this.getPossibleMove()[this.getposXY()[1]][this.getposXY()[0]] = 'B';
 	}		
-		
-	
 	
 	public void createPossibleMove(Game game){
 		for(int i = 0; i < 8; i++){
@@ -40,9 +34,9 @@ public abstract class Player {
 		}
 		for(int i = 0; i < 8; i++){ //X
 			for(int j = 0; j < 8; j++){ //Y
-				if(game.getReversi()[j][i] == EMPTYBOX){ //if the square is empty, maybe we can play here
+				if(game.getReversi()[j][i] == EMPTYBOX){ //if the box is empty, maybe we can play there
 					int valueAction = 0;
-					//we check if an adversary color is around this square
+					//we check if an adversary color is around this box
 					if(i-1 >= 0 && j-1 >= 0 && game.getReversi()[j-1][i-1] != EMPTYBOX && game.getReversi()[j-1][i-1] != this.color){
 						valueAction += checkTopLeft(i-1, j-1, game);//check top left diagonal
 					}
@@ -71,8 +65,7 @@ public abstract class Player {
 						possibleMove[j][i] = valueAction+1;
 					} else {
 						possibleMove[j][i] = 0;
-					}
-					
+					}					
 				}
 			}
 		}
@@ -230,63 +223,67 @@ public abstract class Player {
 		return bool;
 	}
 	
-	public int[] minMax(Game game){
-		int[] posXY = new int[2];
+	public void minMax(Game game){
 		long T = System.currentTimeMillis();
-		posXY = maxMove(game, T);		
-		return posXY;
+		int depth = DEPTH_MAX;
+		maxMove(game, T, depth);		
 	}
 	
-	public int[] maxMove(Game game, long T){
-		int[] posXY = new int[2];
-		if(game.endGame() || (int)(System.currentTimeMillis() - T) > game.getTimeLimit()){
-			return posXY;
+	public int maxMove(Game game, long T, int depth){		
+		if(game.endGame() || (int)(System.currentTimeMillis() - T) > game.getTimeLimit() || depth <= 0){
+			return game.getCurrentPlayer().getScore();
 		} else {
-			int best_move = 0;
-			Game gamebis = new Game(game);
-			gamebis.setReversi(posXY[1], posXY[0], this.getColor());
+			int bestScore = 0; //we try to maximize the score
+			int scoreTemp = 0;			
 			for(int i = 0; i < 8; i++){
-				for(int j = 0; j < 8; j++){
+				for(int j = 0; j < 8; j++){					
 					if(this.getPossibleMove()[j][i] != 0){//if it's a possible move
-						posXY = minMove(gamebis, T);
-						if(game.getReversi()[posXY[1]][posXY[0]] > best_move){						
-							posXY[0] = i;
-							posXY[1] = j;						
+						Game gamebis = new Game(game); //we duplicate the game
+						gamebis.setReversi(posXY[1], posXY[0], this.getColor()); //we apply this move
+						gamebis.nextPlayer(); //we will minimize the opponent move in minMove
+						//we stay at the current player on game variable
+						scoreTemp = minMove(gamebis, T, depth - 1);
+						if(scoreTemp > bestScore){						
+							this.posXY[0] = i; //we save the move on the actual player
+							this.posXY[1] = j;	
+							bestScore = scoreTemp;
 						}
 					}
 				}
 			}
-			return posXY;
+			return bestScore;
 		}		
 	}
 	
-	public int[] minMove(Game game, long T){
-		int[] posXY = new int[2];
-		int best_move = 0;
-		Game gamebis = new Game(game);
-		gamebis.setReversi(posXY[1], posXY[0], this.getColor());
+	public int minMove(Game game, long T, int depth){
+		int bestScore = 500; //score to minimize
+		int scoreTemp = 0;
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
-				if(this.getPossibleMove()[j][i] != 0){//if it's a possible move
-					posXY = maxMove(gamebis, T);
-					if(game.getReversi()[posXY[1]][posXY[0]] > best_move){						
-						posXY[0] = i;
-						posXY[1] = j;						
+				if(this.getPossibleMove()[j][i] != 0){ //if it's a possible move
+					Game gamebis = new Game(game); //we duplicate the game
+					gamebis.setReversi(posXY[1], posXY[0], this.getColor()); //we apply this move
+					gamebis.nextPlayer(); //we will maximize the current player move in maxMove
+					scoreTemp = maxMove(gamebis, T, depth - 1);
+					//we stay at the opponent player on game variable
+					if(scoreTemp < bestScore){						
+						this.posXY[0] = i;
+						this.posXY[1] = j;		
+						bestScore = scoreTemp;
 					}
 				}
 			}
 		}
-		return posXY;		
+		return bestScore;		
 	}
 	
 	public String getLastMove(){
 		String string = new String();
-		string = Character.toString((char)(this.posXY[1]+97));
-		string += Character.toString((char)(this.posXY[0]+49));
+		string = Character.toString((char)(this.posXY[0]+97));
+		string += Character.toString((char)(this.posXY[1]+49));
 		return string;		
 	}
-	
-	
+		
 	public int getScore(){
 		return this.score;
 	}
@@ -307,16 +304,9 @@ public abstract class Player {
 		return this.possibleMove;
 	}
 	
-	public void setPosXY(int[] posXY){
-		this.posXY[0] = posXY[0];
-		this.posXY[1] = posXY[1];
-	}
-
 	public void setColor(int arg0){
 		this.color = arg0;
 	}
-	
-	
 	
 	public void setScore(Game game){
 		this.score = 0;

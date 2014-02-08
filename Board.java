@@ -4,9 +4,11 @@ import java.io.InputStreamReader;
 import java.util.Observable;
 import java.util.Observer;
 
-
-
-
+/**
+ * 
+ * Thread which will interact with the user (Text view)
+ *
+ */
 public class Board implements Runnable, Observer {
 	
 	public static String PLAY = "[a-h][1-8]";
@@ -16,6 +18,7 @@ public class Board implements Runnable, Observer {
 	public static String HELP = "help";
 	private Game game;
 	private Thread t;
+	
 	
 	public Board(Game g){
 		this.game = g;
@@ -29,16 +32,16 @@ public class Board implements Runnable, Observer {
 		boolean quit = false;
 		System.out.println("\n");
 		do {
-			if (this.game.getActualPlayer() instanceof HumanPlayer){
+			if (this.game.getCurrentPlayer() instanceof HumanPlayer){
 				command = this.readCommand();			
 				if (command != null ) {
 					command = command.toLowerCase();				
 					if (command.matches("[a-h][1-8]")) {
-						if(this.game.getActualPlayer().checkPossibleMove(command)){
-							this.game.getActualPlayer().chooseAction(false, this.game);
-							int posX = Character.getNumericValue(command.charAt(0)) - 10;
-							int posY = Character.getNumericValue(command.charAt(1)) - 1;
-							this.game.getActualPlayer().play(posX,posY, this.game);
+						if(this.game.getCurrentPlayer().checkPossibleMove(command)){							
+							int posX = Character.getNumericValue(command.charAt(0)) - 10; //convert the character [a-h] into indice value for the boardgame
+							int posY = Character.getNumericValue(command.charAt(1)) - 1; //convert the character [1-8] into indice value for the boardgame
+							this.game.setReversi(posX,posY, this.game.getCurrentPlayer().getColor());	
+							this.game.getCurrentPlayer().chooseAction(false, this.game); //this boolean will reactivate the thread
 						} else {
 							this.game.toString();
 							System.out.println("This move is not allowed. Choose another one.");
@@ -60,6 +63,9 @@ public class Board implements Runnable, Observer {
 		
 	}
 	
+	/**
+	 * Print the command list
+	 */
 	public void help() {
 		System.out.println("Use : \n" + HELP + " to get the command list \n"
 				+ PRINT + " : to print the board \n"
@@ -78,21 +84,20 @@ public class Board implements Runnable, Observer {
 		return resultat;
 	}
 	
+	/**
+	 * Update the text view, depending the argument arg.
+	 */
 	public void update(Observable o, Object arg) {
-		if(arg.equals("playerChange")){			
+		if(arg.equals("BestMoveSelected")){
 			System.out.println(this.game.toString());
-			System.out.println("It is " + this.game.getActualPlayer().getName() + "'s turn (Player " + Character.toString((char)this.game.getActualPlayer().getColor()) +").");
-			System.out.print(PROMPT);
-		} else if(arg.equals("BestMoveSelected")){
-			System.out.println(this.game.toString());
-			System.out.println("It is " + this.game.getActualPlayer().getName() + "'s turn (Player " + Character.toString((char)this.game.getActualPlayer().getColor()) +").");
+			System.out.println("Turn " + this.game.getTurn() + " : " + "It is " + this.game.getCurrentPlayer().getName() + "'s turn (Player " + Character.toString((char)this.game.getCurrentPlayer().getColor()) +").");
 			System.out.print(PROMPT);
 		} else if(arg.equals("AIsTurn")){
-			System.out.println(this.game.getActualPlayer().getName() + " will play...");
+			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " is going to play...");
 		} else if(arg.equals("AIhasPlayed")){
-			System.out.println(this.game.getActualPlayer().getName() + " has played " + this.game.getActualPlayer().getLastMove());
+			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " has played " + this.game.getCurrentPlayer().getLastMove());
 		} else if(arg.equals("NoMoreMove")){
-			System.out.println(this.game.getActualPlayer().getName() + " can't play anymore !");
+			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " can't play anymore !");
 		}
 	}
 

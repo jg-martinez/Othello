@@ -7,8 +7,7 @@ public class ArtificialIntelligence extends Player {
 	
 	public void chooseAction(boolean bool, Game game){		
 		createPossibleMove(game);	
-		this.setPosXY(minMax(game));		
-		play(this.getposXY()[0], this.getposXY()[1], game);
-		
+		minMax(game);
+		game.setReversi(this.getposXY()[0],this.getposXY()[1], game.getCurrentPlayer().getColor());		
 	}	
 }
