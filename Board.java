@@ -60,7 +60,7 @@ public class Board implements Runnable, Observer {
 				}
 			}
 		} while (quit == false && !this.game.endGame());
-		
+		System.exit(0);	
 	}
 	
 	/**
