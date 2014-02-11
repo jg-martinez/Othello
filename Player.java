@@ -321,7 +321,7 @@ public abstract class Player {
 	
 	public String toString(){
 		String string = new String();
-		string = "\t" + this.getName() + " : " + this.getScore();
+		string = "\t" + this.getName() + " (" + Character.toString((char)this.getColor()) + ") " + " : " + this.getScore();
 		return string;
 	}
 }

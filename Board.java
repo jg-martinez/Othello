@@ -60,7 +60,9 @@ public class Board implements Runnable, Observer {
 				}
 			}
 		} while (quit == false && !this.game.endGame());
-		System.exit(0);	
+		if(quit == true) {
+			System.exit(0);	
+		}
 	}
 	
 	/**
@@ -93,11 +95,11 @@ public class Board implements Runnable, Observer {
 			System.out.println("Turn " + this.game.getTurn() + " : " + "It is " + this.game.getCurrentPlayer().getName() + "'s turn (Player " + Character.toString((char)this.game.getCurrentPlayer().getColor()) +").");
 			System.out.print(PROMPT);
 		} else if(arg.equals("AIsTurn")){
-			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " is going to play...");
+			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " (" + Character.toString((char)this.game.getCurrentPlayer().getColor()) + ") " + " is going to play...");
 		} else if(arg.equals("AIhasPlayed")){
-			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " has played " + this.game.getCurrentPlayer().getLastMove());
+			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " (" + Character.toString((char)this.game.getCurrentPlayer().getColor()) + ") " + " has played " + this.game.getCurrentPlayer().getLastMove());
 		} else if(arg.equals("NoMoreMove")){
-			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " can't play anymore !");
+			System.out.println("Turn " + this.game.getTurn() + " : " + this.game.getCurrentPlayer().getName() + " (" + Character.toString((char)this.game.getCurrentPlayer().getColor()) + ") " + " can't play anymore !");
 		}
 	}
 

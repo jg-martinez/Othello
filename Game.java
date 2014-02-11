@@ -200,14 +200,14 @@ public class Game extends Observable {
 	public void winnerIs(){
 		this.updateScore();
 		if(this.players.get(0).getScore() > this.players.get(1).getScore()){
-			System.out.println(this.players.get(0).getName() + "wins !");
+			System.out.println(this.players.get(0).getName() + " (" + Character.toString((char)this.players.get(0).getColor()) + ") " + "wins !");
 		} else if(this.players.get(0).getScore() < this.players.get(1).getScore()){
-			System.out.println(this.players.get(1).getName() + "wins !");
+			System.out.println(this.players.get(1).getName() + " (" + Character.toString((char)this.players.get(1).getColor()) + ") " + "wins !");
 		} else {
 			System.out.println("Draw.");
 		}
 		System.out.println(this.toString());
-		System.out.println(this.players.get(0).getName() + " : " + this.players.get(0).getScore() + "\t" + this.players.get(1).getName() + " : " + this.players.get(1).getScore());
+		System.out.println(this.players.get(0).getName() + " (" + Character.toString((char)this.players.get(0).getColor()) + ") " + " : " + this.players.get(0).getScore() + "\t" + this.players.get(1).getName() + " (" + Character.toString((char)this.players.get(1).getColor()) + ") " + " : " + this.players.get(1).getScore());
 	}
 	
 	public int[][] getReversi(){
